@@ -304,8 +304,6 @@ get_comtrade <- function(freq,
   print(paste0("startyear: ", startyear, "startmonth: ", startmonth,
                "endyear: ", endyear, "endmonth :", endmonth))
   
-  stop()
-  
   # If monthly frequency is specified:
   if (freq == "monthly") {
     if (startyear == endyear) {
