@@ -7,42 +7,70 @@
 get_comtrade(
   freq,
   startyear,
-  startmonth,
-  endyear = as.numeric(format(Sys.Date(), "\%Y")),
-  endmonth = as.numeric(format(Sys.Date(), "\%m")) - 1,
+  startmonth = NULL,
+  endyear = NULL,
+  endmonth = NULL,
   token,
-  savedir
+  savedir = NULL
 )
 }
 \arguments{
-\item{freq}{A string. Specify the frequency of the reported trade data, either \code{"annual"} or \code{"monthly"}.}
+\item{freq}{A string. Specify the frequency of the reported trade data,
+either \code{"annual"} or \code{"monthly"}.}
 
-\item{startyear}{An integer. Specify the first year of the database. \cr >= 1962 for annual, >= 2010 for monthly frequency.}
+\item{startyear}{An integer. Specify the first year of the database. \cr >=
+1962 for annual, >= 2010 for monthly frequency.}
 
 \item{startmonth}{An integer. Specify the first month of the database.}
 
-\item{endyear}{An integer. Default: Current year. Specify the last year of the database. Must specify the same year or later as the \code{startyear}.}
+\item{endyear}{An integer. Default: Previous year. Specify the last year of
+the database. Must specify the same year or later as the \code{startyear}.}
 
-\item{endmonth}{An integer. Default: Previous month. Specify the last month of the database. Must specify previous month or before if current year is specified in \code{lastyear}.}
+\item{endmonth}{An integer. Default: Previous month. Specify the last month
+of the database. Must specify previous month or before if current year is
+specified in \code{lastyear}.}
 
-\item{token}{A string. Provide a valid token from the UN Comtrade database website.}
+\item{token}{A string. Provide a valid token from the UN Comtrade database
+website.}
 
-\item{savedir}{A string. If directory is provided, a file named \code{gravity.csv} will be saved here.}
+\item{savedir}{A string. If directory is provided, a file named
+\code{gravity.csv} will be saved here.}
 }
 \value{
-Returns a dataframe. The dataframe contains the complete set of bilateral trade flows reported to the Comtrade database.
+Returns a dataframe. The dataframe contains the complete set of
+bilateral trade flows reported to the Comtrade database.
 }
 \description{
 Part of the \pkg{ComtradeDatabaseDownloader} package. \cr
-Download data from the UN Comtrade database and wrangle it into a format which is easily applied to Gravity Model type estimations. Specify start year/month and end year/month (if empty, last available period is assumed).
-Specify a directory in \code{savedir} to automatically save the dataframe to a \code{.csv} file.
+Download data from the UN Comtrade database and wrangle it into a format
+which is easily applied to Gravity Model type estimations. Specify start
+year/month and end year/month (if empty, last available period is assumed).
+Specify a directory in \code{savedir} to automatically save the dataframe to
+a \code{.csv} file.
 }
 \details{
-WARNING: The process might take up to 5 minutes per period to complete, depending on internet speed, processor, memory, etc.
+WARNING: The process might take up to 5 minutes per period to complete,
+depending on internet speed, processor, memory, etc.
 
-Make sure to provide a valid token generated from \href{https://comtrade.un.org/api/swagger/ui/index#/Auth}{the Comtrade Database} website and that you are connecting from a network with a premium site licence subscription (e.g. your university network).
+Make sure to provide a valid token generated from
+\href{https://comtrade.un.org/api/swagger/ui/index#/Auth}{the Comtrade
+Database} website and that you are connecting from a network with a premium
+site license subscription (e.g. your university network).
 }
 \examples{
-df <- get_comtrade(freq = "monthly", startyear = 2018, startmonth = 1, endyear = 2021, endmonth = 12, token = "YOURTOKENHERE")
-df <- get_comtrade(freq = "annual", staryear = 2000, token = "YOURTOKENHERE")
+\dontrun{
+df <- get_comtrade(
+    freq = "monthly", 
+    startyear = 2018, 
+    startmonth = 1, 
+    endyear = 2021, 
+    endmonth = 12, 
+    token = "YOURTOKENHERE"
+)
+
+df <- get_comtrade(
+    freq = "annual", 
+    staryear = 2000, 
+    token = "YOURTOKENHERE"
+)}
 }

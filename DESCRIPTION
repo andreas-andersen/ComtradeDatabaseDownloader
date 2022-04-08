@@ -1,11 +1,13 @@
 Package: ComtradeDatabaseDownloader
 Title: Comtrade Database Downloader for Gravity Models
-Version: 0.0.1.0
+Version: 1.0.0
 Description: Package to download trade data from the Comtrade Database and wrangle it into a dataframe to be used in Gravity Model type estimations.
-Licence: `use_mit_licence()`
+License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 3.5.0)
-URL: https://github.com/andreas-andersen/
+Imports: utils, stats
+URL: https://github.com/andreas-andersen/ComtradeDatabaseDownloader
+BugReports: https://github.com/andreas-andersen/ComtradeDatabaseDownloader/issues
 LazyData: true
 Authors@R: person("Andreas Makoto Fukuda", "Andersen", email = "andreas.andersen@gmail.com", role = c("aut", "cre"))
 Roxygen: list(markdown = TRUE)
