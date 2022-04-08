@@ -72,9 +72,9 @@ wrangle_comtrade_data <- function(df,
   
   # Filter the aggregated trade values
   df <- df[df$Commodity.Code == "TOTAL",]
-  
+
   # Filter Import and Export flows
-  df <- df[df$Trade.Flow %in% c("Imports", "Exports"),]
+  df <- df[df$Trade.Flow %in% c("Imports", "Exports", "Import", "Export"),]
   
   # Filter out trade with/reported by "the World"
   df <- df[!(df$Reporter.Code == 0 | df$Partner.Code == 0),]
@@ -364,7 +364,7 @@ get_comtrade <- function(freq,
       "value"
     )
     # Reorder observations
-    df <- df[order(df$repcode, df$parcode, df$year, df$month),]
+    df <- df[order(df$repcode, df$parcode, df$flow, df$year, df$month),]
     
   # If annual frequency is specified: 
   } else {
@@ -394,14 +394,17 @@ get_comtrade <- function(freq,
       }
     }
     
-    df <- df[, c(1, 2:6, 8)]
+    df <- df[, c(1:6, 8)]
     colnames(df) <- c(
       "year", "flow", 
       "repcode", "reporter", "parcode", "partner", 
       "value"
     )
-    df <- df[order(df$repcode, df$parcode, df$year),]
+    df <- df[order(df$repcode, df$parcode, df$flow, df$year),]
   }
+  
+  # Reset row index
+  row.names(df) <- NULL
   
   # Save to directory if savedir is specified
   if (!missing(savedir)) {
