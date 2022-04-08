@@ -6,11 +6,11 @@ object suited for Gravity Model estimation.
 
 ### Prerequisites:
 
-- Access to a network with premium site license subscription.
-- Creation of an [API token](https://comtrade.un.org/api/swagger/ui/index\#/
-Auth)
+- Access to a network with premium site license subscription to the Comtrade
+Database.
+- Creation of an [API token](https://comtrade.un.org/api/swagger/ui/index\#/Auth)
 
-### Quick installation guide:
+## Quick installation guide:
 
 ``` r
 # install.packages("devtools")
