@@ -49,7 +49,7 @@ Sometimes, the Comtrade Database may reject your request for a file.
 Unfortunately, this seems to be happening randomly, and the current version of
 the package is not programmed to handle this automatically. Instead, it will
 save the progress in a temp file and you should be able to simply re-enter your 
-previous \code{get_comtrade()} command and continue on from where the process
+previous `get_comtrade()` command and continue on from where the process
 stopped.
 
 You should estimate approx. 2.5 minutes to download and process one period
