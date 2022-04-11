@@ -15,30 +15,32 @@ get_comtrade(
 )
 }
 \arguments{
-\item{freq}{A string. Specify the frequency of the reported trade data,
-either \code{"annual"} or \code{"monthly"}.}
+\item{freq}{A single character string. Specify the frequency of the reported
+trade data, either \code{"annual"} or \code{"monthly"}.}
 
-\item{startyear}{An integer. Specify the first year of the database. \cr >=
-1962 for annual, >= 2010 for monthly frequency.}
+\item{startyear}{A single integer. Specify the first year of the database.
+\cr >= 1962 for annual, >= 2010 for monthly frequency.}
 
-\item{startmonth}{An integer. Specify the first month of the database.}
+\item{startmonth}{A single integer. Specify the first month of the database.}
 
-\item{endyear}{An integer. Default: Previous year. Specify the last year of
-the database. Must specify the same year or later as the \code{startyear}.}
+\item{endyear}{A single integer. Default: Previous year. Specify the last
+year of the database. Must specify the same year or later as the
+\code{startyear}.}
 
-\item{endmonth}{An integer. Default: Previous month. Specify the last month
-of the database. Must specify previous month or before if current year is
-specified in \code{lastyear}.}
+\item{endmonth}{A single integer. Default: Previous month. Specify the last
+month of the database. Must specify previous month or before if current year
+is specified in \code{lastyear}.}
 
-\item{token}{A string. Provide a valid token from the UN Comtrade database
-website.}
+\item{token}{A single character string. Provide a valid token from the UN
+Comtrade database website.}
 
-\item{savedir}{A string. If directory is provided, a file named
-\code{gravity.csv} will be saved here.}
+\item{savedir}{A single character string containing a valid directory. If
+\code{savedir} is specified, a file named \code{gravity.csv} containing the
+output will be saved here.}
 }
 \value{
-Returns a dataframe. The dataframe contains the complete set of
-bilateral trade flows reported to the Comtrade database.
+Returns a \code{data.frame}. The data.frame contains the complete
+set of bilateral trade flows reported to the Comtrade database.
 }
 \description{
 Part of the \pkg{ComtradeDatabaseDownloader} package. \cr

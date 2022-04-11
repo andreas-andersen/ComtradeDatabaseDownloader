@@ -2,23 +2,29 @@
 #' 
 #' Part of the \pkg{ComtradeDatabaseDownloader} package. \cr
 #' A support function for the \code{\link{get_comtrade}} function.
+#' 
 #' @export
-get_comtrade_file <- function(freq, 
-                              year, 
-                              month = NULL, 
-                              token) {
+get_comtrade_file <- function(freq, year, month = NULL, token) 
+{
   # Compose URL used to call Comtrade API
   base_url <- "http://comtrade.un.org/api/get/bulk/C"
   if (freq == "monthly") {
-    freq_parm <- "M" } else { freq_parm <- "A"
-    }
+    freq_parm <- "M" 
+  } else { 
+    freq_parm <- "A"
+  }
   ps_parm <- paste0(year, formatC(month, width = 2, format = "d", flag = "0"))
   url <- paste(
     base_url, 
     freq_parm, 
     ps_parm, 
     "ALL", 
-    paste0("HS?token", token), sep = "/"
+    if (freq == "monthly") {
+      paste0("HS?token", token)
+    } else {
+      paste0("S1?token", token)
+    }
+    , sep = "/"
   )
   
   # This code chunk will download, extract and import the raw data file from
@@ -29,9 +35,6 @@ get_comtrade_file <- function(freq,
     message(paste0(
       "    ", ps_parm, " already extracted, reading data...")
     )
-    d <- utils::read.csv(list.files(f, full.names = TRUE))
-    message(paste0("    cleaning up..."))
-    unlink(f, recursive = TRUE)
   } else {
     z <- file.path(tempdir(), paste0(ps_parm, ".zip"))
     if (file.exists(z)) {
@@ -40,22 +43,29 @@ get_comtrade_file <- function(freq,
       )
       utils::unzip(z, exdir = f)
       message(paste0("    reading data..."))
-      d <- utils::read.csv(list.files(f, full.names = TRUE))
-      message(paste0("    cleaning up..."))
-      unlink(f, recursive = TRUE)
     } else {
       message(paste0("    downloading data..."))
       utils::download.file(url, z, mode = "wb", quiet = TRUE)
       message(paste0("    extracting data..."))
       utils::unzip(z, exdir = f)
       message(paste0("    reading data..."))
-      d <- utils::read.csv(list.files(f, full.names = TRUE))
-      message(paste0("    cleaning up..."))
-      unlink(f, recursive = TRUE)
     }
   }
+  df <- data.table::fread(
+    list.files(f, full.names = TRUE), 
+    data.table = FALSE, 
+    check.names = TRUE, 
+    showProgress = FALSE, 
+    select = list("integer" = 3, "character" = 8, "integer" = 9, 
+                  "character" = 10, "integer" = 12, "character" = 13, 
+                  "character" = 15, "integer64" = 21)
+  )
   
-  return(d)
+  # Delete temporary files
+  message(paste0("    cleaning up..."))
+  unlink(c(f, z), recursive = TRUE)
+  
+  return(df)
 }
 
 #' Wrangle Comtrade Database Period
@@ -63,12 +73,9 @@ get_comtrade_file <- function(freq,
 #' Part of the \pkg{ComtradeDatabaseDownloader} package. \cr
 #' A support function for the \code{\link{get_comtrade}} function.
 #' @export
-wrangle_comtrade_data <- function(df, 
-                                  freq) {
+wrangle_comtrade_data <- function(df, freq) 
+{
   message(paste0("    wrangling..."))
-  
-  # Select relevant variables
-  df <- df[, c(3, 8, 9, 10, 12, 13, 15, 21)]
   
   # Filter the aggregated trade values
   df <- df[df$Commodity.Code == "TOTAL",]
@@ -107,6 +114,26 @@ wrangle_comtrade_data <- function(df,
       numeric(1))  
   }
   
+  # Rearrange and rename variables
+  if (freq == "monthly") {
+    df <- df[, c(1, 9, 10, 2:6, 8)]
+    colnames(df) <- c(
+      "period", "year", "month", "flow", 
+      "repcode", "reporter", "parcode", "partner", 
+      "value"
+    )
+    # Reorder observations
+    df <- df[order(df$repcode, df$parcode, df$flow, df$year, df$month),]
+  } else {
+    df <- df[, c(1:6, 8)]
+    colnames(df) <- c(
+      "year", "flow", 
+      "repcode", "reporter", "parcode", "partner", 
+      "value"
+    )
+    df <- df[order(df$repcode, df$parcode, df$flow, df$year),]
+  }
+  
   return(df)
 }
 
@@ -127,22 +154,24 @@ wrangle_comtrade_data <- function(df,
 #' Database} website and that you are connecting from a network with a premium 
 #' site license subscription (e.g. your university network).
 #' 
-#' @param freq A string. Specify the frequency of the reported trade data, 
-#' either \code{"annual"} or \code{"monthly"}.
-#' @param startyear An integer. Specify the first year of the database. \cr >= 
-#' 1962 for annual, >= 2010 for monthly frequency.
-#' @param startmonth An integer. Specify the first month of the database. 
-#' @param endyear An integer. Default: Previous year. Specify the last year of 
-#' the database. Must specify the same year or later as the \code{startyear}. 
-#' @param endmonth An integer. Default: Previous month. Specify the last month 
-#' of the database. Must specify previous month or before if current year is 
-#' specified in \code{lastyear}.
-#' @param token A string. Provide a valid token from the UN Comtrade database 
-#' website. 
-#' @param savedir A string. If directory is provided, a file named 
-#' \code{gravity.csv} will be saved here.
-#' @return Returns a dataframe. The dataframe contains the complete set of 
-#' bilateral trade flows reported to the Comtrade database.
+#' @param freq A single character string. Specify the frequency of the reported 
+#' trade data, either \code{"annual"} or \code{"monthly"}.
+#' @param startyear A single integer. Specify the first year of the database. 
+#' \cr >= 1962 for annual, >= 2010 for monthly frequency.
+#' @param startmonth A single integer. Specify the first month of the database. 
+#' @param endyear A single integer. Default: Previous year. Specify the last 
+#' year of the database. Must specify the same year or later as the 
+#' \code{startyear}. 
+#' @param endmonth A single integer. Default: Previous month. Specify the last 
+#' month of the database. Must specify previous month or before if current year 
+#' is specified in \code{lastyear}.
+#' @param token A single character string. Provide a valid token from the UN 
+#' Comtrade database website. 
+#' @param savedir A single character string containing a valid directory. If 
+#' \code{savedir} is specified, a file named \code{gravity.csv} containing the 
+#' output will be saved here.
+#' @return Returns a \code{data.frame}. The data.frame contains the complete 
+#' set of bilateral trade flows reported to the Comtrade database.
 #' @examples 
 #' \dontrun{
 #' df <- get_comtrade(
@@ -166,7 +195,8 @@ get_comtrade <- function(freq,
                          endyear = NULL,
                          endmonth = NULL,
                          token, 
-                         savedir = NULL) {
+                         savedir = NULL) 
+{
   # Assigning default values
   if (freq == "annual") {
     if (missing(endyear)) {
@@ -185,13 +215,16 @@ get_comtrade <- function(freq,
       if (as.numeric(format(Sys.Date(), "%m")) == 1) {
         endyear <- as.numeric(format(Sys.Date(), "%Y")) - 1
         endmonth <- 12
-      } else {
+      } else if (missing(endmonth)) {
         endmonth <- as.numeric(format(Sys.Date(), "%m")) - 1
       }
     }
   }
   
   # Error handling
+  padded_startmonth <- formatC(startmonth, width = 2, format = "d", flag = "0")
+  padded_endmonth <- formatC(endmonth, width = 2, format = "d", flag = "0")
+  
   if (!(freq %in% c("annual", "monthly"))) {
     stop(paste0(
       "Invalid frequency specified, ", 
@@ -251,8 +284,6 @@ get_comtrade <- function(freq,
       format(Sys.Date(), "%Y"), "."
     ))
   }
-  padded_startmonth <- formatC(startmonth, width = 2, format = "d", flag = "0")
-  padded_endmonth <- formatC(endmonth, width = 2, format = "d", flag = "0")
   if (
     freq == "monthly" & 
     as.numeric(paste0(
@@ -301,11 +332,9 @@ get_comtrade <- function(freq,
     stop("Comtrade token must be a string.")
   }
   
-  print(paste0("startyear: ", startyear, "startmonth: ", startmonth,
-               "endyear: ", endyear, "endmonth :", endmonth))
-  
-  # If monthly frequency is specified:
+  # If monthly frequency is specified
   if (freq == "monthly") {
+    # Generate looping vectors
     if (startyear == endyear) {
       years <- rep(startyear, endmonth - startmonth + 1)
       months <- seq(startmonth, endmonth)
@@ -327,97 +356,228 @@ get_comtrade <- function(freq,
     # Start timer
     starttime <- Sys.time()
     
-    message(paste0(
-      "[", 1, "/", length(years), "] ", 
-      "Processing period ", 
-      years[1], 
-      formatC(months[1], width = 2, format = "d", flag = "0")
-    ))
+    # Assign directory for saving temp file
+    t <- file.path(tempdir(), "monthlytemp.csv")
     
-    # Run downloader/importer function
-    df <- get_comtrade_file(freq, years[1], months[1], token)
-    # Run wrangler function
-    df <- wrangle_comtrade_data(df, freq)
+    # If temp file from previous download exists, load temp file
+    if (file.exists(t)) {
+      df <- data.table::fread(
+        t, 
+        data.table = FALSE, 
+        showProgress = FALSE, 
+        select = list("integer" = 1, "integer" = 2, "integer" = 3, 
+                      "character" = 4, "character" = 5, "character" = 6, 
+                      "character" = 7, "character" = 8, "integer64" = 9)
+      )
+      
+      # Save first and last periods of the temp file
+      tstartyear <- df[1, "year"]
+      tstartmonth <- df[1, "month"]
+      tendyear <- df[nrow(df), "year"] 
+      tendmonth <- df[nrow(df), "month"]
+      
+      # If temp start period does not match with current request, start over
+      if (!(paste0(tstartyear, tstartmonth) == paste0(years, months)[1])) {
+        message(paste0(
+          "Period specified: From ",
+          month.abb[startmonth], " ", startyear, " to ",
+          month.abb[endmonth], " ", endyear, ".\n",
+          "Estimated time to process: ",
+          length(years) * 2.5, " minutes\n"
+        ))
+        message(paste0(
+          "[", 1, "/", length(years), "] ", 
+          "Processing period: ", 
+          month.abb[months[1]], " ", years[1]
+        ))
+        
+        # Run downloader/importer and wrangler functions
+        df <- get_comtrade_file(freq, years[1], months[1], token)
+        df <- wrangle_comtrade_data(df, freq)
+        
+      } else {
+        # If temp start period matches with current request, continue on from
+        # previous attempt.
+        cutoff_index <- match(
+          paste0(tendyear, tendmonth), 
+          paste0(years, months)
+        )
+        years <- years[cutoff_index:length(years)]
+        months <- months[cutoff_index:length(months)]
+        
+        message(paste0(
+          "Period specified: From ",
+          month.abb[startmonth], " ", startyear, " to ",
+          month.abb[endmonth], " ", endyear, ".\n",
+          "Previous temp file found, continuing from ",
+          month.abb[months[2]], " ", years[2],
+          "\nEstimated time to process: ",
+          length(years) * 2.5, " minutes\n",
+          "[", 1, "/", length(years), "] ",
+          "Importing temp file periods..."
+        ))
+      }
+      
+    } else {
+      # If temp file does not exist, initiate process.
+      message(paste0(
+        "Period specified: From ",
+        month.abb[startmonth], " ", startyear, " to ",
+        month.abb[endmonth], " ", endyear, ".\n",
+        "Estimated time to process: ",
+        length(years) * 2.5, " minutes\n"
+      ))
+      message(paste0(
+        "[", 1, "/", length(years), "] ", 
+        "Processing period: ", 
+        month.abb[months[1]], " ", years[1]
+      ))
+      
+      df <- get_comtrade_file(freq, years[1], months[1], token)
+      df <- wrangle_comtrade_data(df, freq)
+    }
     
     # Loop if more than one period is specified to be downloaded
     if (length(years) > 1) {
       for (i in seq(2, length(years))){
         message(paste0(
           "[", i, "/", length(years), "] ", 
-          "Processing period ", 
-          years[i], 
-          formatC(months[i], width = 2, format = "d", flag = "0")
+          "Processing period: ", 
+          month.abb[months[i]], " ", years[i]
         ))
         
         temp <- get_comtrade_file(freq, years[i], months[i], token)
         temp <- wrangle_comtrade_data(temp, freq) 
-        # Row-bind dataframes
+        
+        # Row-bind data.frames
         df <- rbind(df, temp)
+        
+        # Save progress to temp file
+        data.table::fwrite(df, t, showProgress = FALSE)
       }
     }
     
-    # Rearrange and rename variables
-    df <- df[, c(1, 9, 10, 2:6, 8)]
-    colnames(df) <- c(
-      "period", "year", "month", "flow", 
-      "repcode", "reporter", "parcode", "partner", 
-      "value"
-    )
-    # Reorder observations
-    df <- df[order(df$repcode, df$parcode, df$flow, df$year, df$month),]
-    
   # If annual frequency is specified: 
   } else {
+    # Generate looping vectors
     years <- seq(startyear, endyear)
-      
+    
+    # Start timer  
     starttime <- Sys.time()
     
-    message(paste0(
-      "[", 1, "/", length(years), "] ", 
-      "Processing period ", 
-      years[1]
-    ))
-    df <- get_comtrade_file(freq, years[1], token = token)
-    df <- wrangle_comtrade_data(df, freq)
+    # Assign directory for saving temp file
+    t <- file.path(tempdir(), "annualtemp.csv")
     
+    # If temp file from previous aborted download exists, load temp file
+    if (file.exists(t)) {
+      df <- data.table::fread(
+        t, 
+        data.table = FALSE, 
+        showProgress = FALSE, 
+        select = list("integer" = 1, "character" = 2, "character" = 3, 
+                      "character" = 4, "character" = 5, "character" = 6, 
+                      "integer64" = 7)
+      )
+      
+      # Save first and last periods of the temp file
+      tstartyear <- df[1, "year"]
+      tendyear <- df[nrow(df), "year"] 
+      
+      # If temp start year does not match with current request, start over
+      if (!(tstartyear == years[1])) {
+        message(paste0(
+          "Period specified: From ",
+          startyear, " to ", endyear, ".\n",
+          "Estimated time to process: ",
+          length(years) * 2.5, " minutes\n"
+        ))
+        message(paste0(
+          "[", 1, "/", length(years), "] ", 
+          "Processing period: ", 
+          years[1]
+        ))
+        
+        # Run downloader/importer and wrangler functions
+        df <- get_comtrade_file(freq, years[1], token = token)
+        df <- wrangle_comtrade_data(df, freq)
+        
+      } else {
+        # If temp start year matches with current request, continue on from
+        # previous attempt.
+        cutoff_index <- match(tendyear, years)
+        years <- years[cutoff_index:length(years)]
+        
+        message(paste0(
+          "Period specified: From ",
+          startyear, " to ", endyear, ".\n",
+          "Previous temp file found, continuing from ", 
+          years[2],
+          "\nEstimated time to process: ",
+          length(years) * 2.5, " minutes\n",
+          "[", 1, "/", length(years), "] ",
+          "Importing temp file periods..."
+        ))
+      }
+      
+    } else {
+      # If temp file does not exist, initiate process.
+      message(paste0(
+        "Period specified: From ",
+        startyear, " to ", endyear, ".\n",
+        "Estimated time to process: ",
+        length(years) * 2.5, " minutes\n"
+      ))
+      message(paste0(
+        "[", 1, "/", length(years), "] ", 
+        "Processing period: ", 
+        years[1]
+      ))
+      
+      df <- get_comtrade_file(freq, years[1], token = token)
+      df <- wrangle_comtrade_data(df, freq)
+    }
+    
+    # Loop if more than one period is specified to be downloaded
     if (length(years) > 1) {
       for (i in seq(2, length(years))){
         message(paste0(
           "[", i, "/", length(years), "] ", 
-          "Processing period ", 
+          "Processing period: ", 
           years[i]
         ))
         
         temp <- get_comtrade_file(freq, years[i], token = token)
         temp <- wrangle_comtrade_data(temp, freq)
+        
+        # Row-bind data.frames
         df <- rbind(df, temp)
+        
+        # Save progress to temp file
+        data.table::fwrite(df, t, showProgress = FALSE)
       }
     }
-    
-    df <- df[, c(1:6, 8)]
-    colnames(df) <- c(
-      "year", "flow", 
-      "repcode", "reporter", "parcode", "partner", 
-      "value"
-    )
-    df <- df[order(df$repcode, df$parcode, df$flow, df$year),]
   }
   
-  # Reset row index
+  # Reset data.frame row index
   row.names(df) <- NULL
   
   # Save to directory if savedir is specified
   if (!missing(savedir)) {
     message("Saving 'gravity.csv'...")
-    utils::write.csv(df, file.path(savedir, "gravity.csv"), row.names = FALSE)
+    data.table::fwrite(
+      df, file.path(savedir, "gravity.csv"), showProgress = FALSE)
   }
+  
+  # Delete temp file
+  unlink(t)
   
   # Report elapsed time
   endtime <- Sys.time()
   message(paste0(
-    "Complete!\nTime Elapsed: "), 
-    round(difftime(endtime, starttime)[[1]], 2), 
-    " minutes")
+    "Complete!\nTime Elapsed: ", 
+    round(difftime(endtime, starttime, units = "mins")[[1]], 2), 
+    " minutes"
+  ))
   
   return(df)
 }
