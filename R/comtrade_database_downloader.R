@@ -45,7 +45,27 @@ get_comtrade_file <- function(freq, year, month = NULL, token)
       message(paste0("    reading data..."))
     } else {
       message(paste0("    downloading data..."))
-      utils::download.file(url, z, mode = "wb", quiet = TRUE)
+      tryCatch({
+        suppressWarnings(
+          utils::download.file(url, z, mode = "wb", quiet = TRUE)
+        )
+      }, error = function(e) {
+        message(paste0("    downloading failed, retrying..."))
+        tryCatch({
+          suppressWarnings(
+            utils::download.file(url, z, mode = "wb", quiet = TRUE)
+          )
+        }, error = function(e) {
+          message(paste0("    downloading failed, retrying..."))
+          tryCatch({
+            suppressWarnings(
+              utils::download.file(url, z, mode = "wb", quiet = TRUE)
+            )
+          }, error = function(e) {
+            stop("Download failed repeatedly, check token or try again later.")
+          })
+        })
+      })
       message(paste0("    extracting data..."))
       utils::unzip(z, exdir = f)
       message(paste0("    reading data..."))
@@ -53,6 +73,7 @@ get_comtrade_file <- function(freq, year, month = NULL, token)
   }
   df <- data.table::fread(
     list.files(f, full.names = TRUE), 
+    enconding = "UTF-8",
     data.table = FALSE, 
     check.names = TRUE, 
     showProgress = FALSE, 
@@ -83,8 +104,12 @@ wrangle_comtrade_data <- function(df, freq)
   # Filter Import and Export flows
   df <- df[df$Trade.Flow %in% c("Imports", "Exports", "Import", "Export"),]
   
-  # Filter out trade with/reported by "the World"
-  df <- df[!(df$Reporter.Code == 0 | df$Partner.Code == 0),]
+  # Filter out trade with reporter/partner "the World", "EU-28" or
+  # "Southern African Customs Union"
+  excluded_codes <- c(0, 97, 711)
+  df <- df[!(
+    df$Reporter.Code %in% excluded_codes | df$Partner.Code %in% excluded_codes
+  ),]
   
   # Convert reporter and partner country code from UN numeric to ISO 3166 
   # Alpha-3 codes
@@ -363,6 +388,7 @@ get_comtrade <- function(freq,
     if (file.exists(t)) {
       df <- data.table::fread(
         t, 
+        encoding = "UTF-8",
         data.table = FALSE, 
         showProgress = FALSE, 
         select = list("integer" = 1, "integer" = 2, "integer" = 3, 
@@ -410,7 +436,7 @@ get_comtrade <- function(freq,
           month.abb[startmonth], " ", startyear, " to ",
           month.abb[endmonth], " ", endyear, ".\n",
           "Previous temp file found, continuing from ",
-          month.abb[months[2]], " ", years[2],
+          month.abb[months[2]], " ", years[2], ".",
           "\nEstimated time to process: ",
           length(years) * 2.5, " minutes\n",
           "[", 1, "/", length(years), "] ",
@@ -472,6 +498,7 @@ get_comtrade <- function(freq,
     if (file.exists(t)) {
       df <- data.table::fread(
         t, 
+        encoding = "UTF-8",
         data.table = FALSE, 
         showProgress = FALSE, 
         select = list("integer" = 1, "character" = 2, "character" = 3, 
@@ -511,7 +538,7 @@ get_comtrade <- function(freq,
           "Period specified: From ",
           startyear, " to ", endyear, ".\n",
           "Previous temp file found, continuing from ", 
-          years[2],
+          years[2], ".",
           "\nEstimated time to process: ",
           length(years) * 2.5, " minutes\n",
           "[", 1, "/", length(years), "] ",

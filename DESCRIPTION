@@ -1,6 +1,6 @@
 Package: ComtradeDatabaseDownloader
 Title: Comtrade Database Downloader for Gravity Models
-Version: 1.1.0
+Version: 1.1.1
 Description: Package to download trade data from the Comtrade Database and wrangle it into a dataframe to be used in Gravity Model type estimations.
 License: MIT + file LICENSE
 Encoding: UTF-8

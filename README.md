@@ -17,9 +17,9 @@ Database.
 devtools::install_github("andreas-andersen/ComtradeDatabaseDownloader")
 ```
 
-Specify data frequency and periods to download and assign dataframe to an object 
-(following example will download Comtrade data containing the 3 monthly trade 
-records from January 2020 to March 2020).
+Specify data frequency and periods to download and assign data.frame to an 
+object (following example will download Comtrade data containing the 3 monthly 
+trade records from January 2020 to March 2020).
 
 ``` r
 df <- get_comtrade(
@@ -46,12 +46,14 @@ Sometimes, the Comtrade Database may reject your request for a file.
 
 ![Error](img/illustration_error.png?raw=true "Error")
 
-Unfortunately, this seems to be happening randomly, and the current version of
-the package is not programmed to handle this automatically. Instead, it will
-save the progress in a temp file and you should be able to simply re-enter your 
-previous `get_comtrade()` command and continue on from where the process
-stopped.
+If this happens, first make sure your Comtrade token is correct. Secondly, 
+Comtrade seems to randomly reject requests, especially if many files have been 
+downloaded in a row. The current version of the package will attempt to 
+reconnect twice in case of a failed request. If this fails, try re-entering 
+the same `get_comtrade()` command later. _As long as this is done 
+during the same `R`-session_, the package will continue on from a temp file 
+which has saved the progress. 
 
 You should estimate approx. 2.5 minutes to download and process one period
 (depending on your internet connection and processing power). In other words, 
-downloading a full year should take about 30 minutes.
+downloading a full year of monthly data should take about 30 minutes.
