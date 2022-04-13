@@ -73,7 +73,7 @@ get_comtrade_file <- function(freq, year, month = NULL, token)
   }
   df <- data.table::fread(
     list.files(f, full.names = TRUE), 
-    enconding = "UTF-8",
+    encoding = "UTF-8",
     data.table = FALSE, 
     check.names = TRUE, 
     showProgress = FALSE, 
