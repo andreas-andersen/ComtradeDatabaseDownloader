@@ -18,8 +18,7 @@ devtools::install_github("andreas-andersen/ComtradeDatabaseDownloader")
 ```
 
 Specify data frequency and periods to download and assign data.frame to an 
-object (following example will download Comtrade data containing the 3 monthly 
-trade records from January 2020 to March 2020).
+object.
 
 ``` r
 df <- get_comtrade(
@@ -31,6 +30,9 @@ df <- get_comtrade(
     token = "YOURTOKENHERE"
 )
 ```
+
+The above example will download Comtrade data containing the 3 monthly 
+trade records from January 2020 to March 2020 and output the `data.frame` below.
 
 ![Output data.frame](img/illustration_dataframe.png?raw=true "Output data.frame")
 

@@ -11,7 +11,8 @@ get_comtrade(
   endyear = NULL,
   endmonth = NULL,
   token,
-  savedir = NULL
+  savedir = NULL,
+  int64 = TRUE
 )
 }
 \arguments{
@@ -37,10 +38,17 @@ Comtrade database website.}
 \item{savedir}{A single character string containing a valid directory. If
 \code{savedir} is specified, a file named \code{gravity.csv} containing the
 output will be saved here.}
+
+\item{int64}{A single logical. Default: \code{TRUE}. If \code{TRUE} is
+specified, the \code{data.frame} will retain \code{Integer64} class of the
+\code{value} column as. If \code{FALSE} is specified, the column will be
+converted to \code{numeric} (since some \code{R} operations do not support
+the \code{Integer64} class).}
 }
 \value{
-Returns a \code{data.frame}. The data.frame contains the complete
-set of bilateral trade flows reported to the Comtrade database.
+Returns a \code{data.frame}. The \code{data.frame} contains the
+complete set of bilateral trade flows reported to the Comtrade database
+within the specified time period.
 }
 \description{
 Part of the \pkg{ComtradeDatabaseDownloader} package. \cr

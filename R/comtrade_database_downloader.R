@@ -195,8 +195,14 @@ wrangle_comtrade_data <- function(df, freq)
 #' @param savedir A single character string containing a valid directory. If 
 #' \code{savedir} is specified, a file named \code{gravity.csv} containing the 
 #' output will be saved here.
-#' @return Returns a \code{data.frame}. The data.frame contains the complete 
-#' set of bilateral trade flows reported to the Comtrade database.
+#' @param int64 A single logical. Default: \code{TRUE}. If \code{TRUE} is 
+#' specified, the \code{data.frame} will retain \code{Integer64} class of the 
+#' \code{value} column as. If \code{FALSE} is specified, the column will be 
+#' converted to \code{numeric} (since some \code{R} operations do not support 
+#' the \code{Integer64} class).
+#' @return Returns a \code{data.frame}. The \code{data.frame} contains the 
+#' complete set of bilateral trade flows reported to the Comtrade database 
+#' within the specified time period.
 #' @examples 
 #' \dontrun{
 #' df <- get_comtrade(
@@ -220,7 +226,8 @@ get_comtrade <- function(freq,
                          endyear = NULL,
                          endmonth = NULL,
                          token, 
-                         savedir = NULL) 
+                         savedir = NULL,
+                         int64 = TRUE) 
 {
   # Assigning default values
   if (freq == "annual") {
@@ -593,6 +600,12 @@ get_comtrade <- function(freq,
     message("Saving 'gravity.csv'...")
     data.table::fwrite(
       df, file.path(savedir, "gravity.csv"), showProgress = FALSE)
+  }
+  
+  # Convert "value" column from class Integer64 if int64 == FALSE is specified
+  if (int64 == FALSE) {
+    message("Converting 'value' from 'Integer64'...")
+    df[,"value"] <- as.numeric(as.character(df$value))
   }
   
   # Delete temp file
