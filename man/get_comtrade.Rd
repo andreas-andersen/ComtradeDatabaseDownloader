@@ -12,7 +12,8 @@ get_comtrade(
   endmonth = NULL,
   token,
   savedir = NULL,
-  int64 = TRUE
+  int64 = TRUE,
+  timeout = NULL
 )
 }
 \arguments{
@@ -44,6 +45,11 @@ specified, the \code{data.frame} will retain \code{Integer64} class of the
 \code{value} column as. If \code{FALSE} is specified, the column will be
 converted to \code{numeric} (since some \code{R} operations do not support
 the \code{Integer64} class).}
+
+\item{timeout}{A single integer. Default: max of either 300 seconds or the
+current download timeout parameter given by \code{getOption("timeout")}.
+If specified, will set the timeout parameter for the current download
+session.}
 }
 \value{
 Returns a \code{data.frame}. The \code{data.frame} contains the

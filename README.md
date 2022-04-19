@@ -6,7 +6,7 @@ object suited for Gravity Model estimation.
 
 ### Prerequisites:
 
-- Access to a network with premium site license subscription to the Comtrade
+- Access to a network with a premium site license subscription to the Comtrade
 Database.
 - Creation of an [API token](https://comtrade.un.org/api/swagger/ui/index\#/Auth)
 

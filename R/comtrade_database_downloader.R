@@ -4,8 +4,8 @@
 #' A support function for the \code{\link{get_comtrade}} function.
 #' 
 #' @export
-get_comtrade_file <- function(freq, year, month = NULL, token) 
-{
+get_comtrade_file <- function(freq, year, month = NULL, token) {
+  
   # Compose URL used to call Comtrade API
   base_url <- "http://comtrade.un.org/api/get/bulk/C"
   if (freq == "monthly") {
@@ -87,6 +87,7 @@ get_comtrade_file <- function(freq, year, month = NULL, token)
   unlink(c(f, z), recursive = TRUE)
   
   return(df)
+  
 }
 
 #' Wrangle Comtrade Database Period
@@ -200,6 +201,10 @@ wrangle_comtrade_data <- function(df, freq)
 #' \code{value} column as. If \code{FALSE} is specified, the column will be 
 #' converted to \code{numeric} (since some \code{R} operations do not support 
 #' the \code{Integer64} class).
+#' @param timeout A single integer. Default: max of either 300 seconds or the 
+#' current download timeout parameter given by \code{getOption("timeout")}. 
+#' If specified, will set the timeout parameter for the current download 
+#' session.
 #' @return Returns a \code{data.frame}. The \code{data.frame} contains the 
 #' complete set of bilateral trade flows reported to the Comtrade database 
 #' within the specified time period.
@@ -227,8 +232,9 @@ get_comtrade <- function(freq,
                          endmonth = NULL,
                          token, 
                          savedir = NULL,
-                         int64 = TRUE) 
-{
+                         int64 = TRUE,
+                         timeout = NULL) {
+  
   # Assigning default values
   if (freq == "annual") {
     if (missing(endyear)) {
@@ -363,6 +369,12 @@ get_comtrade <- function(freq,
   if (!is.character(token)) {
     stop("Comtrade token must be a string.")
   }
+  if (!missing(int64) & !(is.logical(int64))) {
+    stop("'int64' must be a logical.")
+  }
+  if (!missing(timeout) & !(is.integer(timeout))) {
+    stop("'timeout' must be an integer.")
+  }
   
   # If monthly frequency is specified
   if (freq == "monthly") {
@@ -383,6 +395,15 @@ get_comtrade <- function(freq,
         rep(seq(1, 12), endyear - startyear - 1), 
         seq(1, endmonth)
       )
+    }
+    
+    # Set download timeout option
+    current_timeout <- getOption("timeout")
+    
+    if (missing(timeout)) {
+      options(timeout = max(300, current_timeout))
+    } else {
+      options(timeout = max(timeout, current_timeout))
     }
     
     # Start timer
@@ -580,7 +601,8 @@ get_comtrade <- function(freq,
           years[i]
         ))
         
-        temp <- get_comtrade_file(freq, years[i], token = token)
+        temp <- get_comtrade_file(
+          freq, years[i], token = token)
         temp <- wrangle_comtrade_data(temp, freq)
         
         # Row-bind data.frames
@@ -618,6 +640,9 @@ get_comtrade <- function(freq,
     round(difftime(endtime, starttime, units = "mins")[[1]], 2), 
     " minutes"
   ))
+  
+  # Reset timeout option
+  options(timeout = current_timeout)
   
   return(df)
 }
