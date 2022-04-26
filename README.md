@@ -1,5 +1,8 @@
 # ComtradeDatabaseDownloader
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/andreas-andersen/ComtradeDatabaseDownloader?label=last%20version)
+![GitHub release date](https://img.shields.io/github/release-date/andreas-andersen/ComtradeDatabaseDownloader)
+
 Download and wrangle global trade data from the 
 [UN Comtrade Database](https://comtrade.un.org/) and output it to a dataframe 
 object suited for Gravity Model estimation.
